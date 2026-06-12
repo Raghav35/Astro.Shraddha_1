@@ -1,0 +1,139 @@
+{
+  "project_name": "Premium Astrology & Spiritual Services Website",
+  "theme": "Light",
+  "archetype": "1 (Organic & Earthy) blended with Traditional Indian Luxury",
+  "design_philosophy": "A refined, trustworthy, and premium aesthetic. Avoiding kitschy 'magic' tropes. Emphasizing heritage, calm, and authority using soft warm tones, editorial serif typography, and generous negative space.",
+  "typography": {
+    "fonts": {
+      "headings": "Cormorant Garamond, serif",
+      "body": "Outfit, sans-serif",
+      "accents_and_labels": "Outfit, sans-serif (Uppercase, wide tracking)"
+    },
+    "rules": {
+      "h1": "text-5xl md:text-6xl lg:text-7xl font-light tracking-tight",
+      "h2": "text-3xl md:text-4xl lg:text-5xl font-light tracking-tight",
+      "body": "text-base md:text-lg font-light leading-relaxed",
+      "overline": "text-xs md:text-sm font-medium uppercase tracking-[0.2em]",
+      "banned_fonts": ["Inter", "Roboto", "Open Sans", "Syne"]
+    }
+  },
+  "colors": {
+    "palette": {
+      "background": "#FAF8F5",
+      "surface": "#FFFFFF",
+      "primary_terracotta": "#BC472A",
+      "primary_hover": "#A03C23",
+      "accent_gold": "#D4AF37",
+      "text_main": "#2D2825",
+      "text_muted": "#6E6864",
+      "border_warm": "#E5DCD3"
+    },
+    "shadcn_css_variables": {
+      "--background": "36 25% 97%",
+      "--foreground": "24 10% 16%",
+      "--card": "0 0% 100%",
+      "--card-foreground": "24 10% 16%",
+      "--popover": "0 0% 100%",
+      "--popover-foreground": "24 10% 16%",
+      "--primary": "11 64% 45%",
+      "--primary-foreground": "36 25% 97%",
+      "--secondary": "36 25% 91%",
+      "--secondary-foreground": "24 10% 16%",
+      "--muted": "36 25% 91%",
+      "--muted-foreground": "24 5% 41%",
+      "--accent": "46 65% 52%",
+      "--accent-foreground": "24 10% 16%",
+      "--destructive": "0 84% 60%",
+      "--destructive-foreground": "0 0% 98%",
+      "--border": "32 24% 86%",
+      "--input": "32 24% 86%",
+      "--ring": "11 64% 45%",
+      "--radius": "0.75rem"
+    },
+    "rules": {
+      "contrast": "Ensure text over images uses text-shadow or a solid gradient overlay. Never use pure #000000; use the Charcoal Mud (#2D2825).",
+      "gradients": "No vibrant digital gradients. Only use transparent-to-solid color gradients for overlays to blend images into the background."
+    }
+  },
+  "layout_and_spacing": {
+    "philosophy": "Generous. Content must breathe.",
+    "section_spacing": "py-24 md:py-32",
+    "grid_system": "Use bento-style asymmetrical grids for Services and Rudraksha. Never perfectly symmetric 3-column Bootstrap layouts.",
+    "border_radius": "rounded-2xl or rounded-3xl for a softer, organic feel.",
+    "shadows": "shadow-[0_8px_30px_rgba(45,40,37,0.06)] for a soft, tactile elevation."
+  },
+  "pages_and_sections": [
+    {
+      "name": "Navigation",
+      "rules": "Sticky top bar. Glassmorphism: backdrop-blur-xl bg-[#FAF8F5]/80 with border-b border-[#E5DCD3]. Visible links on desktop, hamburger on mobile. CTA button 'Book Consultation' in Primary Terracotta."
+    },
+    {
+      "name": "Hero Section",
+      "rules": "Editorial layout. Use the warm pattern texture as a subtle background. Left-aligned heavy Serif H1 (e.g., 'Discover Your Cosmic Blueprint'). Warm gradient overlay so text is highly readable. Right side can feature the Astrologer portrait or Temple imagery."
+    },
+    {
+      "name": "About the Astrologer",
+      "rules": "Asymmetrical layout. Astrologer portrait slightly offset, overlapping a colored block (Secondary). List Education, Experience, and Specialties using refined typography and generous spacing."
+    },
+    {
+      "name": "Services & Booking",
+      "rules": "Cards for 'Kundli Reading' and 'Marriage Match'. Implement a seamless Booking Form (Shadcn Calendar + Select). Include Razorpay integration CTA ('Pay & Book'). Use organic card shapes."
+    },
+    {
+      "name": "Rudraksha Info",
+      "rules": "Gallery/Grid layout showcasing different beads (use Wood Bead Rosary image). Large high-quality images with overlapping text cards describing benefits."
+    },
+    {
+      "name": "Testimonials",
+      "rules": "An elegant Marquee (using react-fast-marquee). High contrast: pale background with crisp dark cards. Include video thumbnail placeholders and text quotes."
+    },
+    {
+      "name": "Contact & Footer",
+      "rules": "Massive py-32 footer. Deep dark contrast here (bg-[#2D2825] text-[#FAF8F5]). Massive typography for 'Connect with us'. Clear WhatsApp CTA (7499778268) and simple contact form."
+    }
+  ],
+  "components": {
+    "buttons": "Rounded-full for main CTAs (pill shape). Solid background for primary, 1px solid border for secondary.",
+    "inputs": "Shadcn Inputs with custom border-[#E5DCD3] and focus:ring-[#BC472A]. Rounded-xl.",
+    "cards": "Flat background, 1px subtle border, soft hover lift (-translate-y-1) with ambient shadow."
+  },
+  "media": {
+    "image_urls": [
+      {
+        "category": "astrologer_portrait",
+        "url": "https://images.unsplash.com/photo-1622207691293-5cd80466dab3?ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjB3b21hbiUyMHByb2Zlc3Npb25hbCUyMHRyYWRpdGlvbmFsJTIwYXR0aXJlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzgxMjU1NTk5fDA",
+        "description": "Portrait of Indian woman with traditional adornment. Use for the Astrologer About section."
+      },
+      {
+        "category": "hero_texture_background",
+        "url": "https://images.unsplash.com/photo-1702590447351-28395dfef0a1?ixid=M3w4NjAxODF8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjBwYXR0ZXJuJTIwdGV4dHVyZSUyMHdhcm18ZW58MHx8fHwxNzgxMjU1NTk5fDA",
+        "description": "Subtle warm Indian floral pattern. Use as a low-opacity background texture."
+      },
+      {
+        "category": "rudraksha_beads",
+        "url": "https://images.unsplash.com/photo-1570336684085-f8453342cfd7?ixid=M3w3NTY2ODh8MHwxfHNlYXJjaHwxfHxzcGlyaXR1YWwlMjBiZWFkc3xlbnwwfHx8fDE3ODEyNTU2MTB8MA",
+        "description": "Wooden bead rosary close up. Use for the Rudraksha section."
+      },
+      {
+        "category": "temple_hero_alternative",
+        "url": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?ixid=M3w4NjY2NzF8MHwxfHNlYXJjaHwxfHxpbmRpYW4lMjB0ZW1wbGUlMjBzdW5zZXR8ZW58MHx8fHwxNzgxMjU1NjEwfDA",
+        "description": "Indian temple at sunset. Use if an architectural background is preferred for a section."
+      }
+    ],
+    "icons": "Use lucide-react. Keep stroke width to 1.5 for a premium, delicate look."
+  },
+  "testing_attributes": "All interactive elements MUST include data-testid. Example: data-testid='booking-submit-button', data-testid='whatsapp-contact-link', data-testid='service-card-kundli'.",
+  "libraries_to_install": [
+    "lucide-react",
+    "framer-motion",
+    "react-fast-marquee"
+  ],
+  "instructions_to_main_agent": [
+    "Do NOT use placeholder text or dummy image URLs. Use the provided Unsplash URLs.",
+    "Implement pure HTML/Tailwind for marketing section structures (Hero, About, Grid). Only use Shadcn for complex interactives (Forms, Calendars, Selects).",
+    "Strictly adhere to the HSL CSS variables provided to ensure the Terracotta and Sand palette works properly with Shadcn components.",
+    "Inject Google Fonts 'Cormorant Garamond' and 'Outfit' in index.html or layout wrapper.",
+    "Ensure the WhatsApp link dynamically formats to: https://wa.me/917499778268",
+    "Mock the Razorpay integration flow if backend is not available, but UI should simulate a real payment step."
+  ]
+}
