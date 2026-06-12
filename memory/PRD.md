@@ -27,21 +27,22 @@ fully mobile-responsive, traditional Indian elegant design.
 - ✅ Home page — hero, editorial layout, CTA strip, feature grid, quote section, **Daily Horoscope widget (12 signs)**
 - ✅ About page — portrait, education, experience, specialties, biography
 - ✅ Services page — 2 service cards + integrated booking form (shadcn Calendar popover + time-slot Select + DOB/TOB/POB)
-- ✅ Rudraksha page — bento grid of 6 rudraksha types with images, deity, planet, benefits
+- ✅ **Rudraksha e-commerce page** — 5 products (3 Mukhi to 7 Mukhi) with photos, descriptions, dynamic pricing (3/4/5/6 = ₹999, 7 = ₹1499), Buy Now → checkout dialog (qty selector + shipping form + Razorpay/manual flow)
 - ✅ Testimonials page — text marquee + video review cards
 - ✅ Contact page — form (persisted to MongoDB) + WhatsApp + Email + Phone cards
 - ✅ Sticky navbar with mobile drawer + dark footer with WhatsApp CTA
-- ✅ **Daily horoscope** generator (date-seeded, no LLM) — `/api/horoscope`, `/api/horoscope/{sign_id}`
+- ✅ Daily horoscope generator (date-seeded, no LLM) — `/api/horoscope`, `/api/horoscope/{sign_id}`
 - ✅ **Admin login + dashboard at `/admin`** — JWT-based env-credential auth (Astro.Shraddha@gmail.com / Likhite@89)
-  - Stats cards (upcoming, total, paid, pending, revenue)
-  - Upcoming / Past / Messages tabs
-  - Per-booking quick actions: Paid, Done, Cancel (PATCH /api/admin/bookings/{id})
-  - WhatsApp / Email / Phone one-tap links per booking
-  - **Manual booking dialog** for clients who book via WhatsApp/phone
-- ✅ Backend routes: `/api/services`, `/api/testimonials`, `/api/rudraksha`, `/api/bookings`, `/api/bookings/{id}/mark-manual`, `/api/payments/verify`, `/api/contact`, `/api/horoscope`, `/api/admin/login`, `/api/admin/me`, `/api/admin/bookings`, `/api/admin/bookings/manual`, `/api/admin/bookings/{id}` (PATCH), `/api/admin/contact`, `/api/admin/stats`
-- ✅ Razorpay flow wired (frontend Razorpay checkout, backend HMAC SHA256 signature verify); when keys are empty → graceful manual booking fallback
+  - 8 stat cards (booking + Rudraksha shop metrics)
+  - Upcoming / Past / **Orders** / Messages tabs
+  - Per-booking quick actions: Paid, Done, Cancel
+  - Per-order quick actions: Paid, Shipped, Delivered, Cancel
+  - WhatsApp / Email / Phone one-tap links per row
+  - Manual booking dialog for clients who book via WhatsApp/phone
+- ✅ Backend routes: services, testimonials, rudraksha (list + by id), bookings (+ manual + verify), contact, horoscope, **rudraksha-orders (create + mark-manual + verify-payment)**, admin/* (login, me, bookings, contact, stats, rudraksha-orders list+patch)
+- ✅ Razorpay flow wired for both consultations + product orders; graceful manual fallback when keys empty
 - ✅ Notification stubs for Resend (email) + Twilio (WhatsApp) — log only until keys are configured
-- ✅ 30/30 backend pytest passing + all E2E UI flows verified (iterations 1 & 2)
+- ✅ 47/47 backend pytest passing + all E2E UI flows verified (iterations 1, 2, 3)
 
 ## Pending / Backlog
 - **P0 — User action**: Add real `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` to `/app/backend/.env` and `REACT_APP_RAZORPAY_KEY_ID` to `/app/frontend/.env` to enable live payments (currently MOCKED via manual fallback)

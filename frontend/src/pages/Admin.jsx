@@ -430,7 +430,7 @@ export default function Admin() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard
           Icon={CalendarDays}
           label="Upcoming"
@@ -445,21 +445,41 @@ export default function Admin() {
         />
         <StatCard
           Icon={CheckCircle2}
-          label="Paid"
+          label="Paid bookings"
           value={stats?.paid_bookings ?? "—"}
           sub="Confirmed"
         />
         <StatCard
+          Icon={IndianRupee}
+          label="Consult revenue"
+          value={stats ? formatINR(stats.revenue_paise) : "—"}
+          sub="From paid bookings"
+        />
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <StatCard
+          Icon={Package}
+          label="Rudraksha orders"
+          value={stats?.rudraksha_orders_total ?? "—"}
+          sub="All time"
+        />
+        <StatCard
+          Icon={CheckCircle2}
+          label="Orders paid"
+          value={stats?.rudraksha_orders_paid ?? "—"}
+          sub="Confirmed"
+        />
+        <StatCard
           Icon={XCircle}
-          label="Pending"
-          value={stats?.pending_bookings ?? "—"}
+          label="Orders pending"
+          value={stats?.rudraksha_orders_pending ?? "—"}
           sub="Awaiting payment"
         />
         <StatCard
           Icon={IndianRupee}
-          label="Revenue"
-          value={stats ? formatINR(stats.revenue_paise) : "—"}
-          sub="From paid bookings"
+          label="Shop revenue"
+          value={stats ? formatINR(stats.rudraksha_revenue_paise || 0) : "—"}
+          sub="From paid orders"
         />
       </div>
 

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -130,6 +131,9 @@ function CheckoutDialog({ item, open, onClose }) {
             <p className="overline mb-3">Sacred bead</p>
             <DialogHeader>
               <DialogTitle className="serif text-3xl leading-tight">{item?.name}</DialogTitle>
+              <DialogDescription className="sr-only">
+                Order {item?.name} — fill in shipping details to proceed to payment.
+              </DialogDescription>
             </DialogHeader>
             <div className="mt-5 aspect-square rounded-2xl overflow-hidden">
               <img src={item?.image} alt={item?.name} className="w-full h-full object-cover" />
