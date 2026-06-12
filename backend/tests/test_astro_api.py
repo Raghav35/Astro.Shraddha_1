@@ -109,8 +109,18 @@ class TestBookings:
         assert body["status"] == "manual_pending"
         assert body["booking_id"] == TestBookings.booking_id
 
-        # GET to verify persistence + no _id leakage
-        r = session.get(f"{API}/bookings", timeout=20)
+        # GET to verify persistence + no _id leakage (admin-gated)
+        admin = session.post(
+            f"{API}/admin/login",
+            json={"email": "Astro.Shraddha@gmail.com", "password": "Likhite@89"},
+            timeout=20,
+        )
+        token = admin.json()["token"]
+        r = session.get(
+            f"{API}/bookings",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=20,
+        )
         assert r.status_code == 200
         items = r.json()
         match = next(
@@ -155,7 +165,17 @@ class TestContact:
         assert "id" in data
         cid = data["id"]
 
-        r = session.get(f"{API}/contact", timeout=20)
+        admin = session.post(
+            f"{API}/admin/login",
+            json={"email": "Astro.Shraddha@gmail.com", "password": "Likhite@89"},
+            timeout=20,
+        )
+        token = admin.json()["token"]
+        r = session.get(
+            f"{API}/contact",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=20,
+        )
         assert r.status_code == 200
         items = r.json()
         assert any(c.get("id") == cid for c in items)

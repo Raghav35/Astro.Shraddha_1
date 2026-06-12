@@ -387,9 +387,9 @@ export default function Admin() {
   }, [bookings]);
 
   const doLogout = () => {
-    logout();
+    navigate("/", { replace: true });
+    setTimeout(() => logout(), 0);
     toast.success("Signed out.");
-    navigate("/");
   };
 
   return (
