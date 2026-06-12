@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, Depends, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -15,6 +15,12 @@ from datetime import datetime, timezone
 import razorpay
 
 from horoscope import SIGNS, SIGNS_BY_ID, horoscope_for, all_horoscopes
+from admin_auth import (
+    create_admin_token,
+    require_admin,
+    verify_admin_password,
+)
+from notifications import notify_new_booking
 
 
 ROOT_DIR = Path(__file__).parent
@@ -369,6 +375,12 @@ async def create_booking(payload: BookingCreate):
 
     await db.bookings.insert_one(booking.model_dump())
 
+    # Fire notifications (email + WhatsApp); never block booking on failure
+    try:
+        await notify_new_booking(booking.model_dump())
+    except Exception as e:  # noqa: BLE001
+        logger.warning("notify_new_booking failed: %s", e)
+
     return OrderResponse(
         booking_id=booking.id,
         razorpay_order_id=razorpay_order_id,
@@ -421,8 +433,8 @@ async def mark_manual(booking_id: str):
 
 
 @api_router.get("/bookings")
-async def list_bookings():
-    docs = await db.bookings.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
+async def list_bookings(admin: dict = Depends(require_admin)):
+    docs = await db.bookings.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
     return docs
 
 
@@ -434,8 +446,139 @@ async def submit_contact(payload: ContactCreate):
 
 
 @api_router.get("/contact")
-async def list_contact():
-    return await db.contact_messages.find({}, {"_id": 0}).sort("created_at", -1).to_list(200)
+async def list_contact(admin: dict = Depends(require_admin)):
+    return await db.contact_messages.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+# ---------- Admin ----------
+class AdminLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class BookingUpdate(BaseModel):
+    payment_status: Optional[str] = None  # paid | failed | manual_pending | refunded
+    status: Optional[str] = None  # upcoming | completed | cancelled
+
+
+class ManualBooking(BaseModel):
+    full_name: str
+    email: EmailStr
+    phone: str
+    service_id: str
+    date_of_birth: Optional[str] = None
+    time_of_birth: Optional[str] = None
+    place_of_birth: Optional[str] = None
+    consultation_date: str
+    consultation_time: str
+    notes: Optional[str] = None
+    payment_status: str = "manual_pending"
+
+
+@api_router.post("/admin/login")
+async def admin_login(payload: AdminLogin):
+    if not verify_admin_password(payload.email, payload.password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    token = create_admin_token()
+    return {
+        "token": token,
+        "email": payload.email.lower(),
+        "role": "admin",
+    }
+
+
+@api_router.get("/admin/me")
+async def admin_me(admin: dict = Depends(require_admin)):
+    return {"email": admin.get("sub"), "role": admin.get("role")}
+
+
+@api_router.get("/admin/bookings")
+async def admin_list_bookings(
+    admin: dict = Depends(require_admin),
+    status: Optional[str] = None,
+    payment_status: Optional[str] = None,
+):
+    q: dict = {}
+    if status:
+        q["status"] = status
+    if payment_status:
+        q["payment_status"] = payment_status
+    docs = await db.bookings.find(q, {"_id": 0}).sort("consultation_date", 1).to_list(500)
+    return docs
+
+
+@api_router.post("/admin/bookings/manual")
+async def admin_create_manual_booking(
+    payload: ManualBooking,
+    admin: dict = Depends(require_admin),
+):
+    service = _find_service(payload.service_id)
+    if not service:
+        raise HTTPException(status_code=400, detail="Invalid service_id")
+    booking = Booking(
+        full_name=payload.full_name,
+        email=payload.email,
+        phone=payload.phone,
+        service_id=service["id"],
+        service_name=service["name"],
+        amount=service["price_paise"],
+        date_of_birth=payload.date_of_birth,
+        time_of_birth=payload.time_of_birth,
+        place_of_birth=payload.place_of_birth,
+        consultation_date=payload.consultation_date,
+        consultation_time=payload.consultation_time,
+        notes=payload.notes,
+        payment_status=payload.payment_status,
+    )
+    doc = booking.model_dump()
+    doc["source"] = "manual_admin"
+    doc["status"] = "upcoming"
+    await db.bookings.insert_one(doc)
+    return {"id": booking.id, "source": "manual_admin"}
+
+
+@api_router.patch("/admin/bookings/{booking_id}")
+async def admin_update_booking(
+    booking_id: str,
+    payload: BookingUpdate,
+    admin: dict = Depends(require_admin),
+):
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="Nothing to update")
+    res = await db.bookings.update_one({"id": booking_id}, {"$set": updates})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Booking not found")
+    doc = await db.bookings.find_one({"id": booking_id}, {"_id": 0})
+    return doc
+
+
+@api_router.get("/admin/contact")
+async def admin_list_contact(admin: dict = Depends(require_admin)):
+    return await db.contact_messages.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+@api_router.get("/admin/stats")
+async def admin_stats(admin: dict = Depends(require_admin)):
+    today = datetime.now(timezone.utc).date().isoformat()
+    total = await db.bookings.count_documents({})
+    upcoming = await db.bookings.count_documents({"consultation_date": {"$gte": today}})
+    paid = await db.bookings.count_documents({"payment_status": "paid"})
+    pending = await db.bookings.count_documents({"payment_status": {"$in": ["pending", "manual_pending"]}})
+    contacts = await db.contact_messages.count_documents({})
+    # Sum revenue from paid bookings (amount is in paise)
+    pipeline = [{"$match": {"payment_status": "paid"}}, {"$group": {"_id": None, "total": {"$sum": "$amount"}}}]
+    rev_cur = db.bookings.aggregate(pipeline)
+    rev_doc = await rev_cur.to_list(1)
+    revenue_paise = rev_doc[0]["total"] if rev_doc else 0
+    return {
+        "total_bookings": total,
+        "upcoming_bookings": upcoming,
+        "paid_bookings": paid,
+        "pending_bookings": pending,
+        "contact_messages": contacts,
+        "revenue_paise": revenue_paise,
+    }
 
 
 app.include_router(api_router)

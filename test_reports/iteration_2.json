@@ -1,0 +1,48 @@
+{
+  "summary": "Full regression of NEW admin features (JWT auth, dashboard, manual booking, stats, notifications stub). Backend: 21/21 pytest tests pass. Frontend: end-to-end UI flow (login redirect, bad creds, good creds, stats render, manual booking dialog, row actions Paid/Done, tabs, refresh, logout token clear, /admin re-auth) all work. One minor UX issue on sign-out destination.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "Admin.jsx doLogout",
+        "issue": "After clicking Sign out, user is taken to /login (with a 'Signed out.' toast) instead of the public home '/'. Cause: logout() clears user state -> RequireAdmin re-renders and <Navigate to=\"/login\"> fires before the explicit navigate(\"/\") call resolves. Spec asked for redirect to /. Token IS properly cleared from localStorage and /admin correctly bounces back to /login on a subsequent visit, so the protection itself works.",
+        "selector": "[data-testid='admin-logout']",
+        "priority": "LOW"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Manual booking dialog", "issues": ["Radix Dialog warns: 'Missing Description or aria-describedby={undefined}' — add a <DialogDescription> or aria-describedby to <DialogContent> for accessibility."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_admin_api.py",
+    "/app/test_reports/pytest/admin_pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional/Low) Fix sign-out destination in /app/frontend/src/pages/Admin.jsx -> call logout() AFTER navigate('/'), e.g. navigate('/', {replace:true}); setTimeout(logout,0); — or just accept landing on /login.",
+    "(Optional) Add DialogDescription to manual booking <DialogContent> to silence Radix a11y warning."
+  ],
+  "critical_code_review_comments": [
+    "/app/backend/admin_auth.py uses hmac.compare_digest against the RAW env password (not a bcrypt hash). The `import bcrypt` and trailing `_ = bcrypt` are dead weight — drop the dependency or actually hash the env password and store the bcrypt digest. Today the credential lives in plaintext in /app/backend/.env.",
+    "/app/backend/server.py admin_login returns lowercase email but does not include `expires_in` / token TTL in the response — frontend has no way to proactively refresh. Acceptable given 12h TTL and `/admin/me` verification on load.",
+    "CORS is set to allow_credentials=True with allow_origins='*' (env default). When credentials=true, browsers reject wildcard origins. Today the admin auth uses bearer tokens (not cookies), so this is fine, but the config is contradictory — either set explicit origin(s) or set allow_credentials=False.",
+    "/app/backend/server.py: GET /api/bookings and GET /api/contact are now correctly gated by require_admin (fixing the PII leak flagged in iteration_1).",
+    "/app/backend/server.py: admin_create_manual_booking ignores payload.payment_status when constructing Booking (it is passed) but then ALWAYS sets status='upcoming' regardless of consultation_date. If admin enters a past date, booking is still labelled 'upcoming' on the doc — but UI computes upcoming/past from date, so harmless.",
+    "/app/backend/notifications.py correctly logs '[MOCK EMAIL]' / '[MOCK WHATSAPP]' when keys are empty and never raises — confirmed via TestPublicBookingWithStubbedNotify."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_admin_api.py (new — 21 admin-feature tests)"
+  ],
+  "success_rate": {"backend": "100% (21/21)", "frontend": "100% functional; 1 LOW UX deviation"},
+  "test_credentials": "Admin: Astro.Shraddha@gmail.com / Likhite@89 (from /app/backend/.env, also documented in /app/memory/test_credentials.md).",
+  "seed_data_creation": "Tests created TEST_-prefixed bookings (TEST_Manual_Admin via POST /api/admin/bookings/manual; TEST_PublicNotify via POST /api/bookings; TEST_UI_Manual via UI). These remain in MongoDB collections 'bookings' for future regressions; they are clearly prefixed for cleanup if needed.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run: cd /app && python -m pytest backend/tests/test_admin_api.py -v. Admin token via POST /api/admin/login with email Astro.Shraddha@gmail.com / Likhite@89. Notifications are MOCKED (RESEND_API_KEY and TWILIO_* are empty in /app/backend/.env) — booking still succeeds and only logs '[MOCK EMAIL]' / '[MOCK WHATSAPP]'. Razorpay also empty -> is_live=false. iteration_1 backend tests (test_astro_api.py) will now FAIL on GET /api/bookings and GET /api/contact because those endpoints are admin-gated; that is the intended new behaviour. Either remove those two checks from test_astro_api.py or add an admin bearer there.",
+  "rca of the issue": "Sign-out redirect: AuthContext.logout() synchronously sets user=null. React schedules re-render of <RequireAdmin>, which sees user=null and renders <Navigate to='/login'>. This client-side Navigate executes before / instead of the imperative navigate('/') from Admin.jsx because Admin is unmounted by the Navigate. Fix: in Admin.doLogout, call navigate('/') first, then logout(); or call logout() inside setTimeout(()=>logout(),0). Strictly a UX nit — auth state is correctly purged."
+}
