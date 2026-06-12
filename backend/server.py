@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 
 import razorpay
 
+from horoscope import SIGNS, SIGNS_BY_ID, horoscope_for, all_horoscopes
+
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / ".env")
@@ -304,6 +306,19 @@ async def list_testimonials():
 @api_router.get("/rudraksha")
 async def list_rudraksha():
     return RUDRAKSHA
+
+
+@api_router.get("/horoscope")
+async def list_horoscope():
+    return {"signs": SIGNS, "today": all_horoscopes()}
+
+
+@api_router.get("/horoscope/{sign_id}")
+async def get_horoscope(sign_id: str):
+    if sign_id not in SIGNS_BY_ID:
+        raise HTTPException(status_code=404, detail="Unknown zodiac sign")
+    return horoscope_for(sign_id)
+
 
 
 def _find_service(service_id: str):

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Sparkles, Star, ShieldCheck, BookOpen } from "lucide-react";
+import HoroscopeWidget from "@/components/HoroscopeWidget";
 
 const ASTROLOGER_IMG =
   "https://images.unsplash.com/photo-1622207691293-5cd80466dab3?ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjB3b21hbiUyMHByb2Zlc3Npb25hbCUyMHRyYWRpdGlvbmFsJTIwYXR0aXJlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzgxMjU1NTk5fDA";
@@ -101,6 +102,9 @@ export default function Home() {
           </p>
         </div>
       </section>
+
+      {/* DAILY HOROSCOPE WIDGET */}
+      <HoroscopeWidget />
 
       {/* FEATURES */}
       <section className="max-w-7xl mx-auto px-6 lg:px-10 py-24 lg:py-32">
