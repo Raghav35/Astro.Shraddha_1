@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Sparkles, ShoppingBag, Loader2, ArrowUpRight, CheckCircle2, Truck, ShieldCheck, Minus, Plus } from "lucide-react";
+import { Sparkles, ShoppingBag, Loader2, ArrowUpRight, CheckCircle2, Truck, ShieldCheck, Minus, Plus, MessageCircle, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -12,7 +12,191 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { api, formatINR } from "@/lib/api";
+import { api, formatINR, WHATSAPP_NUMBER } from "@/lib/api";
+
+function RecommendationCTA() {
+  const [form, setForm] = useState({
+    name: "",
+    phone: "",
+    date_of_birth: "",
+    time_of_birth: "",
+    place_of_birth: "",
+    question: "",
+  });
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!form.name.trim() || !/^\+?\d[\d\s-]{7,}$/.test(form.phone)) {
+      toast.error("Please enter your name and a valid phone number.");
+      return;
+    }
+    setBusy(true);
+    // Always persist quietly — never block the user from reaching WhatsApp
+    try {
+      await api.post("/rudraksha-inquiry", form);
+    } catch {
+      // Non-blocking — primary value is the WhatsApp deep link
+    }
+
+    const lines = [
+      "🙏 Namaste Shraddha ji, I'd like a Rudraksha recommendation.",
+      "",
+      `Name: ${form.name}`,
+      form.date_of_birth ? `Date of birth: ${form.date_of_birth}` : null,
+      form.time_of_birth ? `Time of birth: ${form.time_of_birth}` : null,
+      form.place_of_birth ? `Place of birth: ${form.place_of_birth}` : null,
+      form.question ? `\nMy question: ${form.question}` : null,
+    ].filter(Boolean);
+
+    const url = `https://wa.me/91${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join("\n"))}`;
+    window.open(url, "_blank", "noopener");
+    setBusy(false);
+    setSent(true);
+    toast.success("Opening WhatsApp — Shraddha will reply personally.");
+  };
+
+  return (
+    <section
+      data-testid="recommendation-cta"
+      className="mt-20 rounded-3xl overflow-hidden border border-[#E5DCD3] bg-white shadow-[0_8px_30px_rgba(45,40,37,0.05)] grid lg:grid-cols-12"
+    >
+      <div className="lg:col-span-5 bg-[#F4EFE7] p-8 lg:p-12 relative">
+        <div className="w-12 h-12 rounded-full bg-[#BC472A] text-[#FAF8F5] flex items-center justify-center mb-6">
+          <HelpCircle size={22} strokeWidth={1.5} />
+        </div>
+        <p className="overline mb-4">Free · No obligation</p>
+        <h2 className="serif text-3xl md:text-4xl leading-tight">
+          Not sure which Mukhi to wear?
+        </h2>
+        <p className="mt-5 text-[#3a342f] font-light leading-relaxed">
+          Share a few details about yourself and we'll guide you over WhatsApp
+          to the Rudraksha that genuinely aligns with your chart — gently and
+          honestly, never to upsell.
+        </p>
+
+        <div className="mt-8 space-y-3 text-sm font-light text-[#3a342f]">
+          <div className="flex items-start gap-2">
+            <Sparkles size={14} strokeWidth={1.5} className="text-[#BC472A] mt-0.5 shrink-0" />
+            Personal reply from Shraddha herself
+          </div>
+          <div className="flex items-start gap-2">
+            <Sparkles size={14} strokeWidth={1.5} className="text-[#BC472A] mt-0.5 shrink-0" />
+            Usually within an hour during work days
+          </div>
+          <div className="flex items-start gap-2">
+            <Sparkles size={14} strokeWidth={1.5} className="text-[#BC472A] mt-0.5 shrink-0" />
+            Your details stay strictly private
+          </div>
+        </div>
+      </div>
+
+      <form
+        onSubmit={submit}
+        data-testid="recommendation-form"
+        className="lg:col-span-7 p-8 lg:p-12 grid sm:grid-cols-2 gap-5"
+      >
+        <div className="sm:col-span-2">
+          <p className="overline mb-1">Tell us about you</p>
+          <h3 className="serif text-2xl leading-tight">Get a free WhatsApp recommendation</h3>
+        </div>
+
+        <div>
+          <Label className="overline">Your name</Label>
+          <Input
+            data-testid="rec-name"
+            className="mt-2 h-11 rounded-xl"
+            value={form.name}
+            onChange={(e) => update("name", e.target.value)}
+            placeholder="Full name"
+          />
+        </div>
+        <div>
+          <Label className="overline">Phone (WhatsApp)</Label>
+          <Input
+            data-testid="rec-phone"
+            className="mt-2 h-11 rounded-xl"
+            value={form.phone}
+            onChange={(e) => update("phone", e.target.value)}
+            placeholder="+91 9XXXXXXXXX"
+          />
+        </div>
+        <div>
+          <Label className="overline">Date of birth (optional)</Label>
+          <Input
+            data-testid="rec-dob"
+            type="date"
+            className="mt-2 h-11 rounded-xl"
+            value={form.date_of_birth}
+            onChange={(e) => update("date_of_birth", e.target.value)}
+          />
+        </div>
+        <div>
+          <Label className="overline">Time of birth (optional)</Label>
+          <Input
+            data-testid="rec-tob"
+            type="time"
+            className="mt-2 h-11 rounded-xl"
+            value={form.time_of_birth}
+            onChange={(e) => update("time_of_birth", e.target.value)}
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <Label className="overline">Place of birth (optional)</Label>
+          <Input
+            data-testid="rec-pob"
+            className="mt-2 h-11 rounded-xl"
+            value={form.place_of_birth}
+            onChange={(e) => update("place_of_birth", e.target.value)}
+            placeholder="City, State, Country"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <Label className="overline">What are you seeking guidance on? (optional)</Label>
+          <Textarea
+            data-testid="rec-question"
+            className="mt-2 min-h-[80px] rounded-xl"
+            value={form.question}
+            onChange={(e) => update("question", e.target.value)}
+            placeholder="e.g., I struggle with anxiety, or I'm starting a new business…"
+          />
+        </div>
+
+        <div className="sm:col-span-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+          {sent ? (
+            <p data-testid="rec-success" className="text-sm text-[#BC472A] font-light">
+              WhatsApp opened — share the message to reach Shraddha.
+            </p>
+          ) : (
+            <p className="text-xs text-[#6E6864] font-light">
+              By submitting, WhatsApp will open with your message ready to send.
+            </p>
+          )}
+          <button
+            data-testid="rec-submit"
+            type="submit"
+            disabled={busy}
+            className="btn-pill bg-[#25D366] hover:bg-[#1ebd5b] disabled:opacity-60 text-white px-6 py-3 text-sm tracking-wide inline-flex items-center gap-2 transition-colors"
+          >
+            {busy ? (
+              <>
+                <Loader2 size={14} className="animate-spin" /> Opening…
+              </>
+            ) : (
+              <>
+                <MessageCircle size={14} strokeWidth={1.5} /> Ask on WhatsApp
+              </>
+            )}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
 
 function CheckoutDialog({ item, open, onClose }) {
   const [qty, setQty] = useState(1);
@@ -419,6 +603,8 @@ export default function Rudraksha() {
           chart? Message us on WhatsApp — we'll guide you, no obligation.
         </h2>
       </div>
+
+      <RecommendationCTA />
 
       <CheckoutDialog
         item={selected}

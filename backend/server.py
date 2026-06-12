@@ -169,6 +169,29 @@ class RudrakshaPaymentVerify(BaseModel):
     razorpay_signature: str
 
 
+class RudrakshaInquiry(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    phone: str
+    date_of_birth: Optional[str] = None
+    time_of_birth: Optional[str] = None
+    place_of_birth: Optional[str] = None
+    question: Optional[str] = None
+    created_at: str = Field(default_factory=now_iso)
+    status: str = "new"  # new | replied | closed
+
+
+class RudrakshaInquiryCreate(BaseModel):
+    name: str
+    phone: str
+    date_of_birth: Optional[str] = None
+    time_of_birth: Optional[str] = None
+    place_of_birth: Optional[str] = None
+    question: Optional[str] = None
+
+
 # ---------- Static catalog ----------
 SERVICES = [
     {
@@ -519,6 +542,13 @@ async def verify_rudraksha_payment(payload: RudrakshaPaymentVerify):
     return {"status": "paid", "order_id": payload.order_id}
 
 
+@api_router.post("/rudraksha-inquiry")
+async def submit_rudraksha_inquiry(payload: RudrakshaInquiryCreate):
+    inquiry = RudrakshaInquiry(**payload.model_dump())
+    await db.rudraksha_inquiries.insert_one(inquiry.model_dump())
+    return {"status": "received", "id": inquiry.id}
+
+
 @api_router.get("/horoscope")
 async def list_horoscope():
     return {"signs": SIGNS, "today": all_horoscopes()}
@@ -768,6 +798,30 @@ async def admin_list_rudraksha_orders(admin: dict = Depends(require_admin)):
     return await db.rudraksha_orders.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
 
 
+@api_router.get("/admin/rudraksha-inquiries")
+async def admin_list_rudraksha_inquiries(admin: dict = Depends(require_admin)):
+    return await db.rudraksha_inquiries.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+class RudrakshaInquiryUpdate(BaseModel):
+    status: Optional[str] = None  # new | replied | closed
+
+
+@api_router.patch("/admin/rudraksha-inquiries/{inquiry_id}")
+async def admin_update_inquiry(
+    inquiry_id: str,
+    payload: RudrakshaInquiryUpdate,
+    admin: dict = Depends(require_admin),
+):
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="Nothing to update")
+    res = await db.rudraksha_inquiries.update_one({"id": inquiry_id}, {"$set": updates})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Inquiry not found")
+    return await db.rudraksha_inquiries.find_one({"id": inquiry_id}, {"_id": 0})
+
+
 class RudrakshaOrderUpdate(BaseModel):
     payment_status: Optional[str] = None
     status: Optional[str] = None  # new | shipped | delivered | cancelled
@@ -810,6 +864,9 @@ async def admin_stats(admin: dict = Depends(require_admin)):
     rud_rev_doc = await rud_rev_cur.to_list(1)
     rudraksha_revenue_paise = rud_rev_doc[0]["total"] if rud_rev_doc else 0
 
+    inquiries_total = await db.rudraksha_inquiries.count_documents({})
+    inquiries_new = await db.rudraksha_inquiries.count_documents({"status": "new"})
+
     return {
         "total_bookings": total,
         "upcoming_bookings": upcoming,
@@ -821,6 +878,8 @@ async def admin_stats(admin: dict = Depends(require_admin)):
         "rudraksha_orders_paid": rudraksha_paid,
         "rudraksha_orders_pending": rudraksha_pending,
         "rudraksha_revenue_paise": rudraksha_revenue_paise,
+        "rudraksha_inquiries_total": inquiries_total,
+        "rudraksha_inquiries_new": inquiries_new,
     }
 
 

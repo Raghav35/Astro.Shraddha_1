@@ -20,6 +20,7 @@ import {
   CalendarDays,
   Inbox,
   Package,
+  HelpCircle,
 } from "lucide-react";
 import { format, parseISO, isAfter, isToday } from "date-fns";
 
@@ -344,24 +345,27 @@ export default function Admin() {
   const [bookings, setBookings] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [inquiries, setInquiries] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [s, b, c, sv, o] = await Promise.all([
+      const [s, b, c, sv, o, iq] = await Promise.all([
         api.get("/admin/stats"),
         api.get("/admin/bookings"),
         api.get("/admin/contact"),
         api.get("/services"),
         api.get("/admin/rudraksha-orders"),
+        api.get("/admin/rudraksha-inquiries"),
       ]);
       setStats(s.data);
       setBookings(b.data);
       setContacts(c.data);
       setServices(sv.data);
       setOrders(o.data);
+      setInquiries(iq.data);
     } catch (e) {
       toast.error("Could not load admin data.");
     } finally {
@@ -508,6 +512,14 @@ export default function Admin() {
             Orders ({orders.length})
           </TabsTrigger>
           <TabsTrigger
+            value="inquiries"
+            data-testid="tab-inquiries"
+            className="rounded-full data-[state=active]:bg-[#BC472A] data-[state=active]:text-[#FAF8F5]"
+          >
+            <HelpCircle size={13} strokeWidth={1.5} className="mr-1.5" />
+            Inquiries ({inquiries.length})
+          </TabsTrigger>
+          <TabsTrigger
             value="contacts"
             data-testid="tab-contacts"
             className="rounded-full data-[state=active]:bg-[#BC472A] data-[state=active]:text-[#FAF8F5]"
@@ -641,6 +653,84 @@ export default function Admin() {
                     </div>
                   </div>
                   {o.notes && <p className="mt-3 text-xs italic text-[#6E6864]">"{o.notes}"</p>}
+                </div>
+              );
+            })
+          )}
+        </TabsContent>
+
+        <TabsContent value="inquiries" className="space-y-3">
+          {inquiries.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#E5DCD3] p-12 text-center text-[#6E6864]">
+              <HelpCircle size={28} strokeWidth={1.5} className="mx-auto mb-3 text-[#BC472A]" />
+              No Rudraksha guidance inquiries yet.
+            </div>
+          ) : (
+            inquiries.map((iq) => {
+              const wa = (iq.phone || "").replace(/\D/g, "");
+              const setStatus = async (status, msg) => {
+                try {
+                  await api.patch(`/admin/rudraksha-inquiries/${iq.id}`, { status });
+                  toast.success(msg);
+                  load();
+                } catch (err) {
+                  toast.error(err?.response?.data?.detail || "Update failed");
+                }
+              };
+              return (
+                <div
+                  key={iq.id}
+                  data-testid={`inquiry-row-${iq.id}`}
+                  className="rounded-2xl border border-[#E5DCD3] bg-white p-5"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-2">
+                    <div>
+                      <p className="serif text-lg leading-tight">{iq.name}</p>
+                      <p className="text-xs text-[#6E6864] mt-0.5">
+                        {iq.created_at ? format(parseISO(iq.created_at), "d MMM yyyy, h:mm a") : ""}
+                      </p>
+                    </div>
+                    <Badge value={iq.status} />
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 text-xs text-[#3a342f] font-light mb-3">
+                    <div><span className="text-[#6E6864]">Phone:</span> {iq.phone || "—"}</div>
+                    <div><span className="text-[#6E6864]">DOB:</span> {iq.date_of_birth || "—"} {iq.time_of_birth || ""}</div>
+                    <div className="sm:col-span-2"><span className="text-[#6E6864]">POB:</span> {iq.place_of_birth || "—"}</div>
+                  </div>
+                  {iq.question && (
+                    <p className="text-sm font-light leading-relaxed text-[#3a342f] mb-3 italic">"{iq.question}"</p>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {wa && (
+                      <a
+                        data-testid={`inquiry-wa-${iq.id}`}
+                        href={`https://wa.me/${wa.startsWith("91") ? wa : "91" + wa}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="btn-pill border border-[#E5DCD3] hover:border-[#BC472A] hover:text-[#BC472A] px-4 py-1.5 text-xs inline-flex items-center gap-1.5"
+                      >
+                        <MessageCircle size={12} strokeWidth={1.5} /> Reply on WhatsApp
+                      </a>
+                    )}
+                    {iq.status !== "replied" && (
+                      <button
+                        data-testid={`inquiry-replied-${iq.id}`}
+                        onClick={() => setStatus("replied", "Marked as replied")}
+                        className="text-xs px-2.5 py-1 rounded-full border border-[#E5DCD3] hover:border-green-500 hover:text-green-700"
+                      >
+                        <CheckCircle2 size={12} strokeWidth={1.5} className="inline mr-1" /> Replied
+                      </button>
+                    )}
+                    {iq.status !== "closed" && (
+                      <button
+                        data-testid={`inquiry-closed-${iq.id}`}
+                        onClick={() => setStatus("closed", "Inquiry closed")}
+                        className="text-xs px-2.5 py-1 rounded-full border border-[#E5DCD3] hover:border-[#BC472A] hover:text-[#BC472A]"
+                      >
+                        Close
+                      </button>
+                    )}
+                  </div>
                 </div>
               );
             })
