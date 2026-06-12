@@ -1,0 +1,55 @@
+{
+  "summary": "Tested NEW Rudraksha e-commerce backend + frontend + Admin Orders tab. Backend: 17/17 pytest pass. Frontend: listing (5 cards), checkout dialog (qty toggle ₹999→₹1,998, shipping form), manual fallback confirmation, admin Orders tab with Paid/Shipped/Delivered/Cancel actions all working end-to-end.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "/rudraksha — product images",
+        "issues": [
+          "Unsplash product photos do NOT depict actual Rudraksha beads. 3-Mukhi shows a gold chain/bracelet, 4-Mukhi shows gold bullion bars, 5-Mukhi shows a Christian wooden CROSS + rosary, 6-Mukhi shows an unrelated keychain-like object. This is a cultural/contextual mismatch on a Hindu spiritual product page and undermines trust. Replace with authentic Rudraksha bead photography."
+        ]
+      },
+      {
+        "screen": "/admin dashboard stat cards",
+        "issues": [
+          "Backend /admin/stats now returns rudraksha_orders_total, rudraksha_orders_paid, rudraksha_orders_pending, rudraksha_revenue_paise but the dashboard StatCard grid still only shows booking metrics. Consider surfacing Rudraksha revenue / order count as additional cards (the data is already fetched)."
+        ]
+      },
+      {
+        "screen": "Checkout dialog (Radix)",
+        "issues": [
+          "Console warning: 'Missing Description or aria-describedby for DialogContent'. Add DialogDescription for accessibility."
+        ]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_rudraksha_api.py",
+    "/app/test_reports/pytest/rudraksha_results.xml"
+  ],
+  "action_items": [
+    "Replace Unsplash product images on /rudraksha with actual Rudraksha bead photos (current images mis-represent the product, including a Christian cross on 5-Mukhi card).",
+    "Optional: surface rudraksha_orders_total / rudraksha_revenue_paise on admin StatCard grid (already returned by backend).",
+    "Optional: add DialogDescription / aria-describedby to CheckoutDialog to silence Radix a11y warning."
+  ],
+  "critical_code_review_comments": [
+    "server.py is ~840 lines and mixes models, static catalogs (SERVICES/TESTIMONIALS/RUDRAKSHA), and route handlers. Consider splitting into catalog.py / models.py / routes_*.py before it crosses 1000 lines.",
+    "RudrakshaOrderCreate.quantity has no Pydantic constraint; relies on max(1, min(qty, 10)) in handler — fine but explicit Field(ge=1, le=10) would 422 earlier with a clearer error.",
+    "/rudraksha-orders does NOT call notify_new_booking; if email/WhatsApp notifications for product orders are desired in future, wire a notify_new_order stub similar to bookings.",
+    "Frontend Razorpay SDK <script src> is not verified to be present in index.html for this page (manual fallback path works because RZP is disabled). If keys are added later, ensure checkout.razorpay.com/v1/checkout.js is loaded."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_rudraksha_api.py (new)"
+  ],
+  "success_rate": {"backend": "100% (17/17)", "frontend": "100%"},
+  "test_credentials": "Admin: Astro.Shraddha@gmail.com / Likhite@89 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Two TEST_ Rudraksha orders created via API + UI for 3-Mukhi, qty=2 (amount=199800 paise). Already moved through paid → shipped/delivered/cancelled states during testing.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "All Rudraksha + admin Orders flows verified end-to-end with REACT_APP_BACKEND_URL. Two TEST_ orders linger in db.rudraksha_orders. test_rudraksha_api.py is the regression suite for the new e-commerce surface; reuse it. Only open items are cosmetic (product imagery, optional dashboard stat cards, a11y warning)."
+}

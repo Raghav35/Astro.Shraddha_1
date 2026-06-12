@@ -56,8 +56,16 @@ class TestCatalogue:
         r = session.get(f"{API}/rudraksha", timeout=20)
         assert r.status_code == 200
         data = r.json()
-        assert len(data) == 6
-        assert all("benefits" in d and "name" in d for d in data)
+        assert len(data) == 5  # 3 Mukhi through 7 Mukhi
+        ids = {d["id"] for d in data}
+        assert {"3-mukhi", "4-mukhi", "5-mukhi", "6-mukhi", "7-mukhi"} == ids
+        prices = {d["id"]: d["price_paise"] for d in data}
+        assert prices["3-mukhi"] == 99900
+        assert prices["4-mukhi"] == 99900
+        assert prices["5-mukhi"] == 99900
+        assert prices["6-mukhi"] == 99900
+        assert prices["7-mukhi"] == 149900
+        assert all({"benefits", "name", "description", "image"} <= d.keys() for d in data)
 
 
 # ---------- Bookings + manual fallback ----------

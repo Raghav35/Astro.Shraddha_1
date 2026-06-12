@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
+import re
 import hmac
 import hashlib
 import logging
@@ -121,6 +122,53 @@ class ContactCreate(BaseModel):
     message: str
 
 
+# ---------- Rudraksha orders ----------
+class RudrakshaOrder(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    rudraksha_id: str
+    rudraksha_name: str
+    quantity: int = 1
+    unit_price_paise: int
+    amount: int  # total in paise
+    full_name: str
+    email: EmailStr
+    phone: str
+    address_line1: str
+    address_line2: Optional[str] = None
+    city: str
+    state: str
+    pincode: str
+    notes: Optional[str] = None
+    payment_status: str = "pending"
+    status: str = "new"  # new | shipped | delivered | cancelled
+    razorpay_order_id: Optional[str] = None
+    razorpay_payment_id: Optional[str] = None
+    created_at: str = Field(default_factory=now_iso)
+
+
+class RudrakshaOrderCreate(BaseModel):
+    rudraksha_id: str
+    quantity: int = 1
+    full_name: str
+    email: EmailStr
+    phone: str
+    address_line1: str
+    address_line2: Optional[str] = None
+    city: str
+    state: str
+    pincode: str
+    notes: Optional[str] = None
+
+
+class RudrakshaPaymentVerify(BaseModel):
+    order_id: str
+    razorpay_order_id: str
+    razorpay_payment_id: str
+    razorpay_signature: str
+
+
 # ---------- Static catalog ----------
 SERVICES = [
     {
@@ -219,78 +267,120 @@ TESTIMONIALS = [
 
 RUDRAKSHA = [
     {
-        "id": "1-mukhi",
-        "name": "1 Mukhi Rudraksha",
-        "deity": "Lord Shiva",
-        "planet": "Sun",
+        "id": "3-mukhi",
+        "mukhi": 3,
+        "name": "3 Mukhi Rudraksha",
+        "deity": "Lord Agni",
+        "planet": "Mars",
         "image": "https://images.unsplash.com/photo-1602173574767-37ac01994b2a?w=900",
+        "price_inr": 999,
+        "price_paise": 99900,
+        "in_stock": True,
+        "description": (
+            "Worn to dissolve guilt, past karmic burden and self-doubt. The "
+            "three-faced bead is governed by Agni — sacred fire — and is said "
+            "to gently burn away what no longer serves the wearer. Excellent "
+            "for those carrying chronic stress or low confidence."
+        ),
         "benefits": [
-            "Enhances focus and leadership",
-            "Awakens spiritual consciousness",
-            "Balances the crown chakra",
+            "Releases past trauma and self-doubt",
+            "Boosts confidence and willpower",
+            "Strengthens the solar plexus and digestion",
         ],
     },
     {
-        "id": "2-mukhi",
-        "name": "2 Mukhi Rudraksha",
-        "deity": "Ardhanareeshwar",
-        "planet": "Moon",
+        "id": "4-mukhi",
+        "mukhi": 4,
+        "name": "4 Mukhi Rudraksha",
+        "deity": "Lord Brahma",
+        "planet": "Mercury",
         "image": "https://images.unsplash.com/photo-1610375461246-83df859d849d?w=900",
+        "price_inr": 999,
+        "price_paise": 99900,
+        "in_stock": True,
+        "description": (
+            "The bead of clarity and intelligent expression. Ruled by Brahma "
+            "and Budh (Mercury), it is traditionally worn by students, "
+            "researchers, writers and speakers to sharpen memory, articulation "
+            "and creative thought."
+        ),
         "benefits": [
-            "Harmonises relationships",
-            "Calms emotional turbulence",
-            "Improves trust and unity at home",
+            "Improves memory, focus and learning",
+            "Enhances communication and creativity",
+            "Supports the throat chakra",
         ],
     },
     {
         "id": "5-mukhi",
+        "mukhi": 5,
         "name": "5 Mukhi Rudraksha",
         "deity": "Kalagni Rudra",
         "planet": "Jupiter",
         "image": "https://images.unsplash.com/photo-1570336684085-f8453342cfd7?w=900",
+        "price_inr": 999,
+        "price_paise": 99900,
+        "in_stock": True,
+        "description": (
+            "The most universally worn Rudraksha — safe for every chart. Five "
+            "Mukhi is associated with Guru (Jupiter) and Kalagni Rudra, and is "
+            "celebrated for calming the nervous system, lowering blood "
+            "pressure and supporting wisdom in everyday life."
+        ),
         "benefits": [
-            "Most worn, supports overall wellbeing",
-            "Reduces blood pressure & stress",
-            "Boosts wisdom & memory",
+            "Reduces stress and blood pressure",
+            "Boosts wisdom, ethics and patience",
+            "Universal — suitable for everyone",
+        ],
+    },
+    {
+        "id": "6-mukhi",
+        "mukhi": 6,
+        "name": "6 Mukhi Rudraksha",
+        "deity": "Lord Kartikeya",
+        "planet": "Venus",
+        "image": "https://images.unsplash.com/photo-1604357209793-fca5dca89f97?w=900",
+        "price_inr": 999,
+        "price_paise": 99900,
+        "in_stock": True,
+        "description": (
+            "The bead of charm, beauty and emotional balance. Governed by "
+            "Shukra (Venus) and Kartikeya, it gently lifts the heart, "
+            "supports relationships, artistic expression and reproductive "
+            "health. Loved by creative professionals."
+        ),
+        "benefits": [
+            "Harmonises love and relationships",
+            "Awakens creativity and artistic flow",
+            "Supports reproductive and emotional health",
         ],
     },
     {
         "id": "7-mukhi",
+        "mukhi": 7,
         "name": "7 Mukhi Rudraksha",
         "deity": "Maa Mahalakshmi",
         "planet": "Saturn",
-        "image": "https://images.unsplash.com/photo-1604357209793-fca5dca89f97?w=900",
-        "benefits": [
-            "Attracts wealth & prosperity",
-            "Removes Shani dosha effects",
-            "Supports business growth",
-        ],
-    },
-    {
-        "id": "9-mukhi",
-        "name": "9 Mukhi Rudraksha",
-        "deity": "Maa Durga",
-        "planet": "Ketu",
         "image": "https://images.unsplash.com/photo-1591019479261-1a103585c559?w=900",
+        "price_inr": 1499,
+        "price_paise": 149900,
+        "in_stock": True,
+        "description": (
+            "The Lakshmi bead — sought after for abundance, business growth "
+            "and protection against Shani dosha. Seven Mukhi is revered for "
+            "removing financial stagnation and inviting steady, ethical "
+            "prosperity into the wearer's life."
+        ),
         "benefits": [
-            "Builds courage and willpower",
-            "Protects from negative energy",
-            "Boosts vitality and confidence",
-        ],
-    },
-    {
-        "id": "11-mukhi",
-        "name": "11 Mukhi Rudraksha",
-        "deity": "Lord Hanuman",
-        "planet": "Mercury",
-        "image": "https://images.unsplash.com/photo-1591466106193-7e889d397b29?w=900",
-        "benefits": [
-            "Strengthens mind & speech",
-            "Excellent for students & seekers",
-            "Protection during travel",
+            "Attracts wealth and steady prosperity",
+            "Removes Shani (Saturn) dosha effects",
+            "Supports business and career growth",
         ],
     },
 ]
+
+
+PIN_RE = re.compile(r"^\d{6}$")
+
 
 
 # ---------- Routes ----------
@@ -312,6 +402,121 @@ async def list_testimonials():
 @api_router.get("/rudraksha")
 async def list_rudraksha():
     return RUDRAKSHA
+
+
+def _find_rudraksha(rid: str):
+    return next((r for r in RUDRAKSHA if r["id"] == rid), None)
+
+
+@api_router.get("/rudraksha/{rudraksha_id}")
+async def get_rudraksha(rudraksha_id: str):
+    r = _find_rudraksha(rudraksha_id)
+    if not r:
+        raise HTTPException(status_code=404, detail="Unknown rudraksha")
+    return r
+
+
+@api_router.post("/rudraksha-orders", response_model=OrderResponse)
+async def create_rudraksha_order(payload: RudrakshaOrderCreate):
+    item = _find_rudraksha(payload.rudraksha_id)
+    if not item:
+        raise HTTPException(status_code=400, detail="Invalid rudraksha_id")
+    if not item.get("in_stock", True):
+        raise HTTPException(status_code=400, detail="Item out of stock")
+    qty = max(1, min(int(payload.quantity or 1), 10))
+    if not PIN_RE.match(payload.pincode):
+        raise HTTPException(status_code=400, detail="Pincode must be 6 digits")
+
+    unit = int(item["price_paise"])
+    total = unit * qty
+
+    order = RudrakshaOrder(
+        rudraksha_id=item["id"],
+        rudraksha_name=item["name"],
+        quantity=qty,
+        unit_price_paise=unit,
+        amount=total,
+        full_name=payload.full_name,
+        email=payload.email,
+        phone=payload.phone,
+        address_line1=payload.address_line1,
+        address_line2=payload.address_line2,
+        city=payload.city,
+        state=payload.state,
+        pincode=payload.pincode,
+        notes=payload.notes,
+    )
+
+    razorpay_order_id = None
+    if RZP_ENABLED:
+        try:
+            rzp = rzp_client.order.create(
+                {
+                    "amount": total,
+                    "currency": "INR",
+                    "payment_capture": 1,
+                    "receipt": order.id[:40],
+                    "notes": {
+                        "order_id": order.id,
+                        "rudraksha": item["name"],
+                        "qty": str(qty),
+                    },
+                }
+            )
+            razorpay_order_id = rzp["id"]
+            order.razorpay_order_id = razorpay_order_id
+        except Exception as e:
+            logger.exception("Razorpay (rudraksha) order failed: %s", e)
+            raise HTTPException(status_code=502, detail="Payment provider error")
+
+    await db.rudraksha_orders.insert_one(order.model_dump())
+
+    return OrderResponse(
+        booking_id=order.id,
+        razorpay_order_id=razorpay_order_id,
+        razorpay_key_id=RZP_KEY_ID if RZP_ENABLED else None,
+        amount=total,
+        currency="INR",
+        is_live=RZP_ENABLED,
+    )
+
+
+@api_router.post("/rudraksha-orders/{order_id}/mark-manual")
+async def mark_rudraksha_manual(order_id: str):
+    res = await db.rudraksha_orders.update_one(
+        {"id": order_id},
+        {"$set": {"payment_status": "manual_pending"}},
+    )
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return {"status": "manual_pending", "order_id": order_id}
+
+
+@api_router.post("/rudraksha-orders/verify-payment")
+async def verify_rudraksha_payment(payload: RudrakshaPaymentVerify):
+    if not RZP_ENABLED:
+        raise HTTPException(status_code=400, detail="Payments are not configured")
+
+    body = f"{payload.razorpay_order_id}|{payload.razorpay_payment_id}".encode()
+    expected = hmac.new(RZP_KEY_SECRET.encode(), body, hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(expected, payload.razorpay_signature):
+        await db.rudraksha_orders.update_one(
+            {"id": payload.order_id},
+            {"$set": {"payment_status": "failed"}},
+        )
+        raise HTTPException(status_code=400, detail="Invalid payment signature")
+
+    await db.rudraksha_orders.update_one(
+        {"id": payload.order_id},
+        {
+            "$set": {
+                "payment_status": "paid",
+                "razorpay_payment_id": payload.razorpay_payment_id,
+            }
+        },
+    )
+    return {"status": "paid", "order_id": payload.order_id}
 
 
 @api_router.get("/horoscope")
@@ -558,6 +763,31 @@ async def admin_list_contact(admin: dict = Depends(require_admin)):
     return await db.contact_messages.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
 
 
+@api_router.get("/admin/rudraksha-orders")
+async def admin_list_rudraksha_orders(admin: dict = Depends(require_admin)):
+    return await db.rudraksha_orders.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+class RudrakshaOrderUpdate(BaseModel):
+    payment_status: Optional[str] = None
+    status: Optional[str] = None  # new | shipped | delivered | cancelled
+
+
+@api_router.patch("/admin/rudraksha-orders/{order_id}")
+async def admin_update_rudraksha_order(
+    order_id: str,
+    payload: RudrakshaOrderUpdate,
+    admin: dict = Depends(require_admin),
+):
+    updates = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if not updates:
+        raise HTTPException(status_code=400, detail="Nothing to update")
+    res = await db.rudraksha_orders.update_one({"id": order_id}, {"$set": updates})
+    if res.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return await db.rudraksha_orders.find_one({"id": order_id}, {"_id": 0})
+
+
 @api_router.get("/admin/stats")
 async def admin_stats(admin: dict = Depends(require_admin)):
     today = datetime.now(timezone.utc).date().isoformat()
@@ -566,11 +796,20 @@ async def admin_stats(admin: dict = Depends(require_admin)):
     paid = await db.bookings.count_documents({"payment_status": "paid"})
     pending = await db.bookings.count_documents({"payment_status": {"$in": ["pending", "manual_pending"]}})
     contacts = await db.contact_messages.count_documents({})
-    # Sum revenue from paid bookings (amount is in paise)
     pipeline = [{"$match": {"payment_status": "paid"}}, {"$group": {"_id": None, "total": {"$sum": "$amount"}}}]
     rev_cur = db.bookings.aggregate(pipeline)
     rev_doc = await rev_cur.to_list(1)
     revenue_paise = rev_doc[0]["total"] if rev_doc else 0
+
+    rudraksha_total = await db.rudraksha_orders.count_documents({})
+    rudraksha_paid = await db.rudraksha_orders.count_documents({"payment_status": "paid"})
+    rudraksha_pending = await db.rudraksha_orders.count_documents(
+        {"payment_status": {"$in": ["pending", "manual_pending"]}}
+    )
+    rud_rev_cur = db.rudraksha_orders.aggregate(pipeline)
+    rud_rev_doc = await rud_rev_cur.to_list(1)
+    rudraksha_revenue_paise = rud_rev_doc[0]["total"] if rud_rev_doc else 0
+
     return {
         "total_bookings": total,
         "upcoming_bookings": upcoming,
@@ -578,6 +817,10 @@ async def admin_stats(admin: dict = Depends(require_admin)):
         "pending_bookings": pending,
         "contact_messages": contacts,
         "revenue_paise": revenue_paise,
+        "rudraksha_orders_total": rudraksha_total,
+        "rudraksha_orders_paid": rudraksha_paid,
+        "rudraksha_orders_pending": rudraksha_pending,
+        "rudraksha_revenue_paise": rudraksha_revenue_paise,
     }
 
 

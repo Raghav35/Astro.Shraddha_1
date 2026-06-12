@@ -19,6 +19,7 @@ import {
   Users,
   CalendarDays,
   Inbox,
+  Package,
 } from "lucide-react";
 import { format, parseISO, isAfter, isToday } from "date-fns";
 
@@ -342,22 +343,25 @@ export default function Admin() {
   const [stats, setStats] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [contacts, setContacts] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const load = async () => {
     setLoading(true);
     try {
-      const [s, b, c, sv] = await Promise.all([
+      const [s, b, c, sv, o] = await Promise.all([
         api.get("/admin/stats"),
         api.get("/admin/bookings"),
         api.get("/admin/contact"),
         api.get("/services"),
+        api.get("/admin/rudraksha-orders"),
       ]);
       setStats(s.data);
       setBookings(b.data);
       setContacts(c.data);
       setServices(sv.data);
+      setOrders(o.data);
     } catch (e) {
       toast.error("Could not load admin data.");
     } finally {
@@ -476,6 +480,14 @@ export default function Admin() {
             Past ({past.length})
           </TabsTrigger>
           <TabsTrigger
+            value="orders"
+            data-testid="tab-orders"
+            className="rounded-full data-[state=active]:bg-[#BC472A] data-[state=active]:text-[#FAF8F5]"
+          >
+            <Package size={13} strokeWidth={1.5} className="mr-1.5" />
+            Orders ({orders.length})
+          </TabsTrigger>
+          <TabsTrigger
             value="contacts"
             data-testid="tab-contacts"
             className="rounded-full data-[state=active]:bg-[#BC472A] data-[state=active]:text-[#FAF8F5]"
@@ -505,6 +517,113 @@ export default function Admin() {
             </div>
           ) : (
             past.map((b) => <BookingRow key={b.id} b={b} onUpdate={load} />)
+          )}
+        </TabsContent>
+
+        <TabsContent value="orders" className="space-y-3">
+          {orders.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#E5DCD3] p-12 text-center text-[#6E6864]">
+              <Package size={28} strokeWidth={1.5} className="mx-auto mb-3 text-[#BC472A]" />
+              No Rudraksha orders yet.
+            </div>
+          ) : (
+            orders.map((o) => {
+              const updateOrder = async (patch, msg) => {
+                try {
+                  await api.patch(`/admin/rudraksha-orders/${o.id}`, patch);
+                  toast.success(msg);
+                  load();
+                } catch (err) {
+                  toast.error(err?.response?.data?.detail || "Update failed");
+                }
+              };
+              const wa = (o.phone || "").replace(/\D/g, "");
+              return (
+                <div
+                  key={o.id}
+                  data-testid={`order-row-${o.id}`}
+                  className="rounded-2xl border border-[#E5DCD3] bg-white p-5"
+                >
+                  <div className="grid lg:grid-cols-12 gap-5">
+                    <div className="lg:col-span-4">
+                      <p className="overline mb-1">{o.created_at ? format(parseISO(o.created_at), "d MMM, h:mm a") : ""}</p>
+                      <p className="serif text-lg leading-tight">{o.rudraksha_name}</p>
+                      <p className="text-xs text-[#6E6864] mt-0.5">Qty {o.quantity} · {formatINR(o.amount)}</p>
+                      <p className="text-xs text-[#6E6864] mt-1">Ref: <span className="font-mono">{o.id?.slice(0, 8)}</span></p>
+                    </div>
+                    <div className="lg:col-span-5">
+                      <p className="serif text-base">{o.full_name}</p>
+                      <p className="text-xs text-[#6E6864]">
+                        {o.address_line1}{o.address_line2 ? `, ${o.address_line2}` : ""}, {o.city}, {o.state} – {o.pincode}
+                      </p>
+                      <div className="mt-1.5 flex flex-wrap gap-3 text-xs text-[#3a342f]">
+                        <a href={`tel:${o.phone}`} className="hover:text-[#BC472A] flex items-center gap-1">
+                          <Phone size={12} strokeWidth={1.5} /> {o.phone}
+                        </a>
+                        {wa && (
+                          <a
+                            href={`https://wa.me/${wa.startsWith("91") ? wa : "91" + wa}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="hover:text-[#BC472A] flex items-center gap-1"
+                          >
+                            <MessageCircle size={12} strokeWidth={1.5} /> WhatsApp
+                          </a>
+                        )}
+                        <a href={`mailto:${o.email}`} className="hover:text-[#BC472A] flex items-center gap-1">
+                          <Mail size={12} strokeWidth={1.5} /> {o.email}
+                        </a>
+                      </div>
+                    </div>
+                    <div className="lg:col-span-3 flex flex-col items-start lg:items-end gap-2">
+                      <div className="flex flex-wrap gap-1.5 justify-end">
+                        <Badge value={o.payment_status} />
+                        {o.status && <Badge value={o.status} />}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5 justify-end mt-1">
+                        {o.payment_status !== "paid" && (
+                          <button
+                            data-testid={`order-paid-${o.id}`}
+                            onClick={() => updateOrder({ payment_status: "paid" }, "Marked as paid")}
+                            className="text-xs px-2.5 py-1 rounded-full border border-[#E5DCD3] hover:border-green-500 hover:text-green-700"
+                          >
+                            <CheckCircle2 size={12} strokeWidth={1.5} className="inline mr-1" /> Paid
+                          </button>
+                        )}
+                        {o.status !== "shipped" && o.status !== "delivered" && (
+                          <button
+                            data-testid={`order-shipped-${o.id}`}
+                            onClick={() => updateOrder({ status: "shipped" }, "Marked as shipped")}
+                            className="text-xs px-2.5 py-1 rounded-full border border-[#E5DCD3] hover:border-[#BC472A] hover:text-[#BC472A]"
+                          >
+                            Shipped
+                          </button>
+                        )}
+                        {o.status !== "delivered" && (
+                          <button
+                            data-testid={`order-delivered-${o.id}`}
+                            onClick={() => updateOrder({ status: "delivered" }, "Marked as delivered")}
+                            className="text-xs px-2.5 py-1 rounded-full border border-[#E5DCD3] hover:border-[#BC472A] hover:text-[#BC472A]"
+                          >
+                            Delivered
+                          </button>
+                        )}
+                        {o.status !== "cancelled" && (
+                          <button
+                            data-testid={`order-cancel-${o.id}`}
+                            onClick={() => updateOrder({ status: "cancelled" }, "Order cancelled")}
+                            className="text-xs px-2.5 py-1 rounded-full border border-[#E5DCD3] hover:border-red-400 hover:text-red-700"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {o.notes && <p className="mt-3 text-xs italic text-[#6E6864]">"{o.notes}"</p>}
+                </div>
+              );
+            })
           )}
         </TabsContent>
 
