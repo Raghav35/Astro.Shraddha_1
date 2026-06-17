@@ -9,7 +9,7 @@ export const api = axios.create({
 });
 
 export const WHATSAPP_NUMBER = "7499778268";
-export const EMAIL_ADDRESS = "Astro.Shraddha@gmail.com";
+export const EMAIL_ADDRESS = "astro.shraddhamohole@gmail.com";
 
 export const formatINR = (paise) =>
   new Intl.NumberFormat("en-IN", {

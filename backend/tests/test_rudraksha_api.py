@@ -17,7 +17,7 @@ if not BASE_URL:
 assert BASE_URL, "REACT_APP_BACKEND_URL required"
 API = f"{BASE_URL.rstrip('/')}/api"
 
-ADMIN_EMAIL = "Astro.Shraddha@gmail.com"
+ADMIN_EMAIL = "astro.shraddhamohole@gmail.com"
 ADMIN_PASSWORD = "Likhite@89"
 
 

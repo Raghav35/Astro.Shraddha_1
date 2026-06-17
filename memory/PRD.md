@@ -9,7 +9,7 @@ fully mobile-responsive, traditional Indian elegant design.
 
 ## User Choices
 - Astrologer name: **Astro Shraddha**
-- Email: `Astro.Shraddha@gmail.com`
+- Email: `astro.shraddhamohole@gmail.com`
 - WhatsApp: `+91 7499778268`
 - Payment gateway: **Razorpay**
 - Services: **Kundli Reading**, **Marriage Match (Kundli Milan)**
@@ -32,7 +32,7 @@ fully mobile-responsive, traditional Indian elegant design.
 - ✅ Contact page — form (persisted to MongoDB) + WhatsApp + Email + Phone cards
 - ✅ Sticky navbar with mobile drawer + dark footer with WhatsApp CTA
 - ✅ Daily horoscope generator (date-seeded, no LLM) — `/api/horoscope`, `/api/horoscope/{sign_id}`
-- ✅ **Admin login + dashboard at `/admin`** — JWT-based env-credential auth (Astro.Shraddha@gmail.com / Likhite@89)
+- ✅ **Admin login + dashboard at `/admin`** — JWT-based env-credential auth (astro.shraddhamohole@gmail.com / Likhite@89)
   - 8 stat cards (booking + Rudraksha shop metrics)
   - Upcoming / Past / **Orders** / Messages tabs
   - Per-booking quick actions: Paid, Done, Cancel

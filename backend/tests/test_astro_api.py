@@ -120,7 +120,7 @@ class TestBookings:
         # GET to verify persistence + no _id leakage (admin-gated)
         admin = session.post(
             f"{API}/admin/login",
-            json={"email": "Astro.Shraddha@gmail.com", "password": "Likhite@89"},
+            json={"email": "astro.shraddhamohole@gmail.com", "password": "Likhite@89"},
             timeout=20,
         )
         token = admin.json()["token"]
@@ -175,7 +175,7 @@ class TestContact:
 
         admin = session.post(
             f"{API}/admin/login",
-            json={"email": "Astro.Shraddha@gmail.com", "password": "Likhite@89"},
+            json={"email": "astro.shraddhamohole@gmail.com", "password": "Likhite@89"},
             timeout=20,
         )
         token = admin.json()["token"]

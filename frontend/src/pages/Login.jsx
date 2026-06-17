@@ -67,7 +67,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-2 rounded-xl h-12"
-                placeholder="Astro.Shraddha@gmail.com"
+                placeholder="astro.shraddhamohole@gmail.com"
                 autoComplete="email"
                 autoFocus
               />
