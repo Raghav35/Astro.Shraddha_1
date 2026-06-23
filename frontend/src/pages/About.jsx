@@ -1,7 +1,7 @@
 import { GraduationCap, Award, Sparkles, Quote } from "lucide-react";
 
 const PORTRAIT =
-  "https://images.unsplash.com/photo-1622207691293-5cd80466dab3?ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwyfHxpbmRpYW4lMjB3b21hbiUyMHByb2Zlc3Npb25hbCUyMHRyYWRpdGlvbmFsJTIwYXR0aXJlJTIwcG9ydHJhaXR8ZW58MHx8fHwxNzgxMjU1NTk5fDA";
+  "https://customer-assets.emergentagent.com/job_stellar-astrology-1/artifacts/1mzbgttv_1000511996.jpg";
 
 const EDUCATION = [
   { year: "2026", title: "Jyotish Pandit", body: "Jyotish Parishad, Pune" },
