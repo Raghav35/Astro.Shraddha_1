@@ -81,7 +81,7 @@ export default function Services() {
       amount: orderData.amount,
       currency: orderData.currency,
       order_id: orderData.razorpay_order_id,
-      name: "Astro Vidushi",
+      name: "Astro Shraddha",
       description: selectedService.name,
       prefill: {
         name: form.full_name,
@@ -153,7 +153,7 @@ export default function Services() {
           Two services. Done thoroughly.
         </h1>
         <p className="mt-6 text-base md:text-lg font-light text-[#6E6864] leading-relaxed">
-          Each session is one-to-one with Vidushi over a private video call.
+          Each session is one-to-one with Shraddha over a private video call.
           Charts are prepared in advance; you receive a recording and a
           remedies summary on WhatsApp afterwards.
         </p>
