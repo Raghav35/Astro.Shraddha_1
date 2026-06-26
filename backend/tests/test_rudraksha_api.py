@@ -93,12 +93,12 @@ class TestOrderCreate:
         r = session.post(f"{API}/rudraksha-orders", json=_valid_payload, timeout=20)
         assert r.status_code == 200, r.text
         data = r.json()
-        assert data["is_live"] is False
+        assert data["is_live"] is True  # live Razorpay keys set
         assert data["amount"] == 99900 * 2
         assert data["currency"] == "INR"
         assert "booking_id" in data
-        assert data["razorpay_order_id"] is None
-        assert data["razorpay_key_id"] is None
+        assert data["razorpay_order_id"] is not None  # live mode
+        assert data["razorpay_key_id"] is not None  # live mode
         TestOrderCreate.order_id = data["booking_id"]
 
     def test_invalid_rudraksha_id(self, session):

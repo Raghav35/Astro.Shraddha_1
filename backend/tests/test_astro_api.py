@@ -41,8 +41,8 @@ class TestCatalogue:
         ids = {s["id"] for s in data}
         assert ids == {"kundli-reading", "marriage-match"}
         prices = {s["id"]: s["price_paise"] for s in data}
-        assert prices["kundli-reading"] == 149900
-        assert prices["marriage-match"] == 199900
+        assert prices["kundli-reading"] == 50000
+        assert prices["marriage-match"] == 50000
 
     def test_testimonials(self, session):
         r = session.get(f"{API}/testimonials", timeout=20)
@@ -89,10 +89,10 @@ class TestBookings:
         assert r.status_code == 200, r.text
         data = r.json()
         assert "booking_id" in data
-        assert data["is_live"] is False
-        assert data["amount"] == 149900
-        assert data["razorpay_order_id"] is None
-        assert data["razorpay_key_id"] is None
+        assert data["is_live"] is True  # live Razorpay keys set
+        assert data["amount"] == 50000
+        assert data["razorpay_order_id"] is not None  # live mode
+        assert data["razorpay_key_id"] is not None  # live mode
         TestBookings.booking_id = data["booking_id"]
 
     def test_create_booking_invalid_service(self, session):

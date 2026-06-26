@@ -203,8 +203,8 @@ SERVICES = [
             "career, finance, relationships, health, and dosha remedies."
         ),
         "duration": "60 minutes",
-        "price_inr": 1499,
-        "price_paise": 149900,
+        "price_inr": 500,
+        "price_paise": 50000,
         "highlights": [
             "Lagna, Rashi and Navamsa chart study",
             "Mahadasha & Antardasha forecast",
@@ -221,8 +221,8 @@ SERVICES = [
             "Nadi & emotional compatibility analysis for both partners."
         ),
         "duration": "75 minutes",
-        "price_inr": 1999,
-        "price_paise": 199900,
+        "price_inr": 500,
+        "price_paise": 50000,
         "highlights": [
             "36 guna match with detailed scoring",
             "Mangal & Nadi dosha review with remedies",

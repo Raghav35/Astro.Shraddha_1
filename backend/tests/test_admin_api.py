@@ -246,4 +246,4 @@ class TestPublicBookingWithStubbedNotify:
         assert r.status_code == 200, r.text
         data = r.json()
         assert "booking_id" in data
-        assert data["is_live"] is False
+        assert data["is_live"] is True  # live Razorpay keys set
