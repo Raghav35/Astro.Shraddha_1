@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: astro-shraddha-api
+    env: python
+    region: singapore
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn server:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: MONGO_URL
+        sync: false
+      - key: DB_NAME
+        value: astro_shraddha
+      - key: DEFAULT_MEETING_LINK
+        value: https://meet.google.com/shraddha-jyotish
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: WHATSAPP_PROVIDER
+        value: interakt
+      - key: WHATSAPP_API_KEY
+        sync: false
+      - key: NOTIFY_WHATSAPP
+        value: "917499778268"
+      - key: NOTIFY_EMAIL
+        value: astro.shraddhamohole@gmail.com
+      - key: ADMIN_EMAIL
+        value: astro.shraddhamohole@gmail.com
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
